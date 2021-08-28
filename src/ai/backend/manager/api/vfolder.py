@@ -628,6 +628,63 @@ async def get_info(request: web.Request, row: VFolderRow) -> web.Response:
         raise VFolderOperationFailed
     return web.json_response(resp, status=200)
 
+@atomic
+@superadmin_required
+@server_status_required(READ_ALLOWED)
+@check_api_params(
+    t.Dict({
+        t.Key('folder_host'): t.String,
+    }))
+async def get_quota(request: web.Request, params: Any) -> web.Response:
+    root_ctx: RootContext = request.app['_root.context']
+    proxy_name, volume_name = root_ctx.storage_manager.split_host(params['folder_host'])
+    log.info('VFOLDER.GET_QUOTA (volume_name:{})', volume_name)
+    try:
+        async with root_ctx.storage_manager.request(
+            proxy_name, 'GET', 'volume/quota',
+            json={
+                'volume': volume_name,
+            },
+            raise_for_status=True,
+        ) as (_, storage_resp):
+            storage_reply = await storage_resp.json()
+    except aiohttp.ClientResponseError:
+        raise VFolderOperationFailed
+    return web.json_response(storage_reply, status=200)
+
+
+@atomic
+@superadmin_required
+@server_status_required(READ_ALLOWED)
+@check_api_params(
+    t.Dict({
+        t.Key('folder_host'): t.String,
+        t.Key('files_soft_limit'): t.Int,
+        t.Key('files_hard_limit'): t.Int,
+        t.Key('space_soft_limit'): t.Int,
+        t.Key('space_hard_limit'): t.Int,
+    }))
+async def update_quota(request: web.Request, params: Any) -> web.Response:
+    root_ctx: RootContext = request.app['_root.context']
+    proxy_name, volume_name = root_ctx.storage_manager.split_host(params['folder_host'])
+    log.info('VFOLDER.UPDATE_QUOTA (volume_name:{})', volume_name)
+    try:
+        async with root_ctx.storage_manager.request(
+            proxy_name, 'POST', 'volume/quota',
+            json={
+                'volume': volume_name,
+                'files_soft_limit': params['files_soft_limit'],
+                'files_hard_limit': params['files_hard_limit'],
+                'space_soft_limit': params['space_soft_limit'],
+                'space_hard_limit': params['space_hard_limit'],
+            },
+            raise_for_status=True,
+        ):
+            pass
+    except aiohttp.ClientResponseError as e:
+        raise VFolderOperationFailed
+    return web.json_response({}, status=200)
+
 
 @atomic
 @auth_required
@@ -2197,4 +2254,11 @@ def create_app(default_cors_options):
     cors.add(add_route('GET',    r'/_/mounts', list_mounts))
     cors.add(add_route('POST',   r'/_/mounts', mount_host))
     cors.add(add_route('DELETE', r'/_/mounts', umount_host))
+    cors.add(add_route('GET', r'/_/quota', get_quota))
+    cors.add(add_route('POST', r'/_/quota', update_quota))
+    #cors.add(add_route('GET', r'/_/qtree', get_qtree_config))
+    #cors.add(add_route('POST', r'/_/qtree', update_qtree_config))
+    #cors.add(add_route('GET', r'/_/qos', get_qos_policy))
+    #cors.add(add_route('POST', r'/_/qos', update_qos_policy))
+    #cors.add(add_route('DELETE', r'/_/qos', delete_qos_policy))
     return app, []
