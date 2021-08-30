@@ -716,10 +716,7 @@ async def get_quota(request: web.Request, params: Any) -> web.Response:
     t.Dict(
         {
             t.Key("folder_host"): t.String,
-            t.Key("files_soft_limit"): t.Int,
-            t.Key("files_hard_limit"): t.Int,
-            t.Key("space_soft_limit"): t.Int,
-            t.Key("space_hard_limit"): t.Int,
+            t.Key("input"): t.Mapping(t.String, t.Any),
         }
     )
 )
@@ -730,14 +727,11 @@ async def update_quota(request: web.Request, params: Any) -> web.Response:
     try:
         async with root_ctx.storage_manager.request(
             proxy_name,
-            "POST",
+            "PATCH",
             "volume/quota",
             json={
                 "volume": volume_name,
-                "files_soft_limit": params["files_soft_limit"],
-                "files_hard_limit": params["files_hard_limit"],
-                "space_soft_limit": params["space_soft_limit"],
-                "space_hard_limit": params["space_hard_limit"],
+                "input": params["input"],
             },
             raise_for_status=True,
         ):
@@ -776,10 +770,7 @@ async def get_qtree_config(request: web.Request, params: Any) -> web.Response:
     t.Dict(
         {
             t.Key("folder_host"): t.String,
-            t.Key("qtree_name"): t.String,
-            t.Key("security_style"): t.String,
-            # TODO: export_policy update
-            # t.Key("export_policy"): t.Dict({t.Key("name"): t.String, t.Key("id"): t.String})
+            t.Key("input"): t.Mapping(t.String, t.Any),
         }
     )
 )
@@ -790,13 +781,163 @@ async def update_qtree_config(request: web.Request, params: Any) -> web.Response
     try:
         async with root_ctx.storage_manager.request(
             proxy_name,
-            "POST",
+            "PATCH",
             "volume/qtree",
             json={
                 "volume": volume_name,
-                "qtree_name": params["qtree_name"],
-                "security_style": params["security_style"],
-                # "export_policy": params["export_policy"],
+                "input": params["input"],
+            },
+            raise_for_status=True,
+        ):
+            pass
+    except aiohttp.ClientResponseError:
+        raise VFolderOperationFailed
+    return web.json_response({}, status=200)
+
+
+@atomic
+@superadmin_required
+@server_status_required(READ_ALLOWED)
+@check_api_params(t.Dict({t.Key("folder_host"): t.String}))
+async def get_qos_policy(request: web.Request, params: Any) -> web.Response:
+    root_ctx: RootContext = request.app["_root.context"]
+    proxy_name, volume_name = root_ctx.storage_manager.split_host(params["folder_host"])
+    log.info("VFOLDER.GET_QOS_POLICY (volume_name:{})", volume_name)
+    try:
+        async with root_ctx.storage_manager.request(
+            proxy_name,
+            "GET",
+            "volume/qos",
+            json={"volume": volume_name},
+            raise_for_status=True,
+        ) as (_, storage_resp):
+            storage_reply = await storage_resp.json()
+    except aiohttp.ClientResponseError:
+        raise VFolderOperationFailed
+    return web.json_response(storage_reply, status=200)
+
+
+@atomic
+@superadmin_required
+@server_status_required(READ_ALLOWED)
+@check_api_params(
+    t.Dict(
+        {
+            t.Key("folder_host"): t.String,
+            t.Key("name"): t.String,
+            t.Key("input"): t.Mapping(t.String, t.Any),
+        }
+    )
+)
+async def create_qos_policy(request: web.Request, params: Any) -> web.Response:
+    root_ctx: RootContext = request.app["_root.context"]
+    proxy_name, volume_name = root_ctx.storage_manager.split_host(params["folder_host"])
+    log.info("VFOLDER.CREATE_QOS_POLICY (volume_name:{})", volume_name)
+    try:
+        async with root_ctx.storage_manager.request(
+            proxy_name,
+            "POST",
+            "volume/qos",
+            json={
+                "volume": volume_name,
+                "name": params["name"],
+                "input": params["input"]
+            },
+            raise_for_status=True,
+        ):
+            pass
+    except aiohttp.ClientResponseError:
+        raise VFolderOperationFailed
+    return web.json_response({}, status=200)
+
+
+@atomic
+@superadmin_required
+@server_status_required(READ_ALLOWED)
+@check_api_params(
+    t.Dict(
+        {
+            t.Key("folder_host"): t.String,
+            t.Key("input"): t.Mapping(t.String, t.Any),
+        }
+    )
+)
+async def update_qos_policy(request: web.Request, params: Any) -> web.Response:
+    root_ctx: RootContext = request.app["_root.context"]
+    proxy_name, volume_name = root_ctx.storage_manager.split_host(params["folder_host"])
+    log.info("VFOLDER.UPDATE_QOS_POLICY(volume_name:{})", volume_name)
+    try:
+        async with root_ctx.storage_manager.request(
+            proxy_name,
+            "PATCH",
+            "volume/qos",
+            json={
+                "volume": volume_name,
+                "input": params["input"],
+            },
+            raise_for_status=True,
+        ):
+            pass
+    except aiohttp.ClientResponseError:
+        raise VFolderOperationFailed
+    return web.json_response({}, status=200)
+
+
+@atomic
+@superadmin_required
+@server_status_required(READ_ALLOWED)
+@check_api_params(
+    t.Dict(
+        {
+            t.Key("folder_host"): t.String,
+            t.Key("input"): t.Mapping(t.String, t.Any),
+        }
+    )
+)
+async def delete_qos_policy(request: web.Request, params: Any) -> web.Response:
+    root_ctx: RootContext = request.app["_root.context"]
+    proxy_name, volume_name = root_ctx.storage_manager.split_host(params["folder_host"])
+    log.info("VFOLDER.DELETE_QOS_POLICY (volume_name:{})", volume_name)
+    try:
+        async with root_ctx.storage_manager.request(
+            proxy_name,
+            "DELETE",
+            "volume/qos",
+            json={
+                "volume": volume_name,
+                "input": params["input"],
+            },
+            raise_for_status=True,
+        ):
+            pass
+    except aiohttp.ClientResponseError:
+        raise VFolderOperationFailed
+    return web.json_response({}, status=200)
+
+
+@atomic
+@superadmin_required
+@server_status_required(READ_ALLOWED)
+@check_api_params(
+    t.Dict(
+        {
+            t.Key("folder_host"): t.String,
+            t.Key("input"): t.Mapping(t.String, t.Any),
+        }
+    )
+)
+async def update_volume_config(request: web.Request, params: Any) -> web.Response:
+    root_ctx: RootContext = request.app["_root.context"]
+    proxy_name, volume_name = root_ctx.storage_manager.split_host(params["folder_host"])
+    log.info("VFOLDER.UPDATE_VOLUME_CONFIG (volume_name:{})", volume_name)
+    try:
+        async with root_ctx.storage_manager.request(
+            proxy_name,
+            "PATCH",
+            "volume/config",
+            json={
+                "volume": volume_name,
+                "input": params["input"],
             },
             raise_for_status=True,
         ):
@@ -2522,10 +2663,12 @@ def create_app(default_cors_options):
     cors.add(add_route("POST", r"/_/mounts", mount_host))
     cors.add(add_route("DELETE", r"/_/mounts", umount_host))
     cors.add(add_route("GET", r"/_/quota", get_quota))
-    cors.add(add_route("POST", r"/_/quota", update_quota))
+    cors.add(add_route("PATCH", r"/_/quota", update_quota))
     cors.add(add_route("GET", r"/_/qtree", get_qtree_config))
-    cors.add(add_route("POST", r"/_/qtree", update_qtree_config))
-    # cors.add(add_route('GET', r'/_/qos', get_qos_policy))
-    # cors.add(add_route('POST', r'/_/qos', update_qos_policy))
-    # cors.add(add_route('DELETE', r'/_/qos', delete_qos_policy))
+    cors.add(add_route("PATCH", r"/_/qtree", update_qtree_config))
+    cors.add(add_route("PATCH", r"/_/volume", update_volume_config))
+    cors.add(add_route('GET', r'/_/qos', get_qos_policy))
+    cors.add(add_route('POST', r'/_/qos', create_qos_policy))
+    cors.add(add_route('PATCH', r'/_/qos', update_qos_policy))
+    cors.add(add_route('DELETE', r'/_/qos', delete_qos_policy))
     return app, []
