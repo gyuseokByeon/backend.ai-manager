@@ -723,7 +723,8 @@ async def get_quota(request: web.Request, params: Any) -> web.Response:
 async def update_quota(request: web.Request, params: Any) -> web.Response:
     root_ctx: RootContext = request.app["_root.context"]
     proxy_name, volume_name = root_ctx.storage_manager.split_host(params["folder_host"])
-    log.info("VFOLDER.UPDATE_QUOTA (volume_name:{})", volume_name)
+    quota = params["input"]
+    log.info("VFOLDER.UPDATE_QUOTA (volume_name:{}, quota:{})", quota)
     try:
         async with root_ctx.storage_manager.request(
             proxy_name,
@@ -731,7 +732,7 @@ async def update_quota(request: web.Request, params: Any) -> web.Response:
             "volume/quota",
             json={
                 "volume": volume_name,
-                "input": params["input"],
+                "input": quota,
             },
             raise_for_status=True,
         ):
@@ -777,7 +778,8 @@ async def get_qtree_config(request: web.Request, params: Any) -> web.Response:
 async def update_qtree_config(request: web.Request, params: Any) -> web.Response:
     root_ctx: RootContext = request.app["_root.context"]
     proxy_name, volume_name = root_ctx.storage_manager.split_host(params["folder_host"])
-    log.info("VFOLDER.UPDATE_QTREE_CONFIG (volume_name:{})", volume_name)
+    config = params["input"]
+    log.info("VFOLDER.UPDATE_QTREE_CONFIG (volume_name:{}, config:{})", volume_name, config)
     try:
         async with root_ctx.storage_manager.request(
             proxy_name,
@@ -785,7 +787,7 @@ async def update_qtree_config(request: web.Request, params: Any) -> web.Response
             "volume/qtree",
             json={
                 "volume": volume_name,
-                "input": params["input"],
+                "input": config,
             },
             raise_for_status=True,
         ):
@@ -832,7 +834,9 @@ async def get_qos_policy(request: web.Request, params: Any) -> web.Response:
 async def create_qos_policy(request: web.Request, params: Any) -> web.Response:
     root_ctx: RootContext = request.app["_root.context"]
     proxy_name, volume_name = root_ctx.storage_manager.split_host(params["folder_host"])
-    log.info("VFOLDER.CREATE_QOS_POLICY (volume_name:{})", volume_name)
+    qos_name = params["name"]
+    qos_policy = params["input"]
+    log.info("VFOLDER.CREATE_QOS_POLICY (volume_name:{}, qos_name:{}, qos_policy:{})", volume_name, qos_name, qos_policy)
     try:
         async with root_ctx.storage_manager.request(
             proxy_name,
@@ -840,8 +844,8 @@ async def create_qos_policy(request: web.Request, params: Any) -> web.Response:
             "volume/qos",
             json={
                 "volume": volume_name,
-                "name": params["name"],
-                "input": params["input"]
+                "name": qos_name,
+                "input": qos_policy
             },
             raise_for_status=True,
         ):
@@ -865,7 +869,8 @@ async def create_qos_policy(request: web.Request, params: Any) -> web.Response:
 async def update_qos_policy(request: web.Request, params: Any) -> web.Response:
     root_ctx: RootContext = request.app["_root.context"]
     proxy_name, volume_name = root_ctx.storage_manager.split_host(params["folder_host"])
-    log.info("VFOLDER.UPDATE_QOS_POLICY(volume_name:{})", volume_name)
+    qos_policy = params["input"]
+    log.info("VFOLDER.UPDATE_QOS_POLICY(volume_name:{}, qos_policy:{})", volume_name, qos_policy)
     try:
         async with root_ctx.storage_manager.request(
             proxy_name,
@@ -873,7 +878,7 @@ async def update_qos_policy(request: web.Request, params: Any) -> web.Response:
             "volume/qos",
             json={
                 "volume": volume_name,
-                "input": params["input"],
+                "input": qos_policy,
             },
             raise_for_status=True,
         ):
@@ -897,7 +902,8 @@ async def update_qos_policy(request: web.Request, params: Any) -> web.Response:
 async def delete_qos_policy(request: web.Request, params: Any) -> web.Response:
     root_ctx: RootContext = request.app["_root.context"]
     proxy_name, volume_name = root_ctx.storage_manager.split_host(params["folder_host"])
-    log.info("VFOLDER.DELETE_QOS_POLICY (volume_name:{})", volume_name)
+    qos_policy = params["input"]
+    log.info("VFOLDER.DELETE_QOS_POLICY (volume_name:{}, qos_policy:{})", volume_name, qos_policy)
     try:
         async with root_ctx.storage_manager.request(
             proxy_name,
@@ -905,7 +911,7 @@ async def delete_qos_policy(request: web.Request, params: Any) -> web.Response:
             "volume/qos",
             json={
                 "volume": volume_name,
-                "input": params["input"],
+                "input": qos_policy,
             },
             raise_for_status=True,
         ):
@@ -929,7 +935,8 @@ async def delete_qos_policy(request: web.Request, params: Any) -> web.Response:
 async def update_volume_config(request: web.Request, params: Any) -> web.Response:
     root_ctx: RootContext = request.app["_root.context"]
     proxy_name, volume_name = root_ctx.storage_manager.split_host(params["folder_host"])
-    log.info("VFOLDER.UPDATE_VOLUME_CONFIG (volume_name:{})", volume_name)
+    config = params["input"]
+    log.info("VFOLDER.UPDATE_VOLUME_CONFIG (volume_name:{}, config:{})", volume_name, config)
     try:
         async with root_ctx.storage_manager.request(
             proxy_name,
@@ -937,7 +944,7 @@ async def update_volume_config(request: web.Request, params: Any) -> web.Respons
             "volume/config",
             json={
                 "volume": volume_name,
-                "input": params["input"],
+                "input": config,
             },
             raise_for_status=True,
         ):
