@@ -836,7 +836,8 @@ async def create_qos_policy(request: web.Request, params: Any) -> web.Response:
     proxy_name, volume_name = root_ctx.storage_manager.split_host(params["folder_host"])
     qos_name = params["name"]
     qos_policy = params["input"]
-    log.info("VFOLDER.CREATE_QOS_POLICY (volume_name:{}, qos_name:{}, qos_policy:{})", volume_name, qos_name, qos_policy)
+    log.info("VFOLDER.CREATE_QOS_POLICY (volume_name:{}, qos_name:{}, qos_policy:{})",
+                volume_name, qos_name, qos_policy)
     try:
         async with root_ctx.storage_manager.request(
             proxy_name,
